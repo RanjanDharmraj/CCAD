@@ -44,8 +44,6 @@ public class MainActivity extends AppCompatActivity implements UsbService.UsbSer
         btnCashAcceptorConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                usbService.setParity(UsbSerialInterface.PARITY_EVEN);
-                usbService.startThread();
                 usbService.write(new byte[]{0x30});
             }
         });
@@ -60,8 +58,6 @@ public class MainActivity extends AppCompatActivity implements UsbService.UsbSer
         btnDespenceNoteConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                usbService.setParity(UsbSerialInterface.PARITY_NONE);
-                usbService.startThread();
                 int checksum = 4^80^2^69^48^49^3;
                 usbService.write(new byte[]{4,80,2,69,48,49,3, (byte) checksum});
 
@@ -78,13 +74,11 @@ public class MainActivity extends AppCompatActivity implements UsbService.UsbSer
         btnDespenceCoinConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                usbService.setParity(UsbSerialInterface.PARITY_NONE);
-                usbService.startThread();
                 byte checkSum = calcChecksum(new byte[]{0x05,0x10,0x00,0x11,0x00});
                 usbService.write(new byte[]{0x05,0x10,0x00,0x11,0x00,checkSum});
 
-                byte checkSum1 = calcChecksum(new byte[]{0x05,0x10,0x00,0x14,0x0A});
-                usbService.write(new byte[]{0x05,0x10,0x00,0x14,0x0A,checkSum1});
+                byte checkSum1 = calcChecksum(new byte[]{0x05,0x10,0x00,0x14,0x03});
+                usbService.write(new byte[]{0x05,0x10,0x00,0x14,0x03,checkSum1});
             }
         });
 

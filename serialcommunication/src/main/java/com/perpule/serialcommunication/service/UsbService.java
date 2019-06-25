@@ -49,17 +49,8 @@ public class UsbService extends Service {
     private UsbDeviceConnection connection;
     private UsbSerialDevice serialPort;
     private UsbServiceReadCallBack usbServiceReadCallBack;
-    private int parity;
 
     private boolean serialPortConnected;
-
-    public void setParity(int parity) {
-        this.parity = parity;
-    }
-
-    public void startThread() {
-        new ConnectionThread().start();
-    }
 
     /*
      *  Data received from serial port will be received here. Just populate onReceivedData with your code
@@ -74,54 +65,16 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() {
         @Override
         public void onReceivedData(byte[] arg0) {
-            try {
+            try{
                 String data = bytesToHex(arg0);
-                if(data.equals("80")) {
-                    write(new byte[] { 0x2 });
-                } else if (data.equals("5E")) {
-                    write(new byte[] { 0x3E });
-                } else if(data.equals("41")){
-                    write(new byte[] { 0x2 });
-                } else if(data.equals("42")) {
-                    write(new byte[] { 0x2 });
-                } else if(data.equals("62")) {
-
-                } else if( data.equals("65")) {
-
-                } else if( data.equals("72")) {
-
-                } else if( data.equals("73")) {
-
-                } else if( data.equals("74")) {
-
-                } else if( data.equals("77")) {
-
-                } else if( data.equals("5")) {
-
-                } else if( data.equals("45")) {
-
-                } else if( data.equals("10")) {
-
-                } else if( data.equals("29")) {
-
-                } else if( data.equals("2F")) {
-
+                if(data.equals("8f")) {
+                    write(new byte[] { 0x02 });
                 }
-                Log.d("Recieved Data", data);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     };
-
-    private static String bytesToHex(byte[] hashInBytes) {
-
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashInBytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
-
-    }
 
     /*
      * State changes in the CTS line will be received here
@@ -160,6 +113,7 @@ public class UsbService extends Service {
                             Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
                             context.sendBroadcast(intent);
                             connection = usbManager.openDevice(device);
+                            new ConnectionThread().start();
                         } else // User not accepted our USB connection. Send an Intent to the Main Activity
                         {
                             Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
@@ -222,7 +176,6 @@ public class UsbService extends Service {
      * This function will be called from MainActivity to write data through Serial Port
      */
     public void write(byte[] data) {
-        Log.i("Serial Port", String.valueOf(serialPort));
         if (serialPort != null)
             serialPort.write(data);
     }
@@ -235,6 +188,7 @@ public class UsbService extends Service {
     public void setUsbServiceReadCallBack(UsbServiceReadCallBack usbServiceReadCallBack) {
         this.usbServiceReadCallBack = usbServiceReadCallBack;
     }
+
 
     private void findSerialPortDevice() {
         // This snippet will try to open the first encountered usb device connected, excluding usb root hubs
@@ -308,7 +262,13 @@ public class UsbService extends Service {
                     serialPort.setBaudRate(BAUD_RATE);
                     serialPort.setDataBits(UsbSerialInterface.DATA_BITS_8);
                     serialPort.setStopBits(UsbSerialInterface.STOP_BITS_1);
-                    serialPort.setParity(parity);
+                    serialPort.setParity(UsbSerialInterface.PARITY_EVEN);
+                    /*
+                      Current flow control Options:
+                      UsbSerialInterface.FLOW_CONTROL_OFF
+                      UsbSerialInterface.FLOW_CONTROL_RTS_CTS only for CP2102 and FT232
+                      UsbSerialInterface.FLOW_CONTROL_DSR_DTR only for CP2102 and FT232
+                     */
                     serialPort.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
                     serialPort.read(mCallback);
                     serialPort.getCTS(ctsCallback);
@@ -339,5 +299,15 @@ public class UsbService extends Service {
                 context.sendBroadcast(intent);
             }
         }
+    }
+
+    private static String bytesToHex(byte[] hashInBytes) {
+
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashInBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+
     }
 }
